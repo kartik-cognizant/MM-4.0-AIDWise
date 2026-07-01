@@ -1,66 +1,134 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DejaVu Payments</title><link rel="stylesheet" href="styles.css"></head>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DejaVu Payments - Transactions</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .live-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .live-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--safe);font-size:11px;font-weight:800}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--safe);box-shadow:0 0 0 rgba(34,197,94,.6);animation:pulse 1.6s infinite}
+  .live-dot.off{background:var(--muted);animation:none;box-shadow:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  .pause-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text)}
+  .pause-btn.paused{background:rgba(245,158,11,.14);color:var(--warn);border-color:var(--warn)}
+  .live-indicator{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:rgba(46,48,142,.08);color:var(--primary);font-size:12px;margin-bottom:12px;font-weight:700}
+  .live-indicator a{color:var(--primary);text-decoration:underline;cursor:pointer}
+  .pagination{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 4px 4px;flex-wrap:wrap}
+  .page-info{font-size:12px;color:var(--muted)}
+  .page-ctrls{display:flex;gap:4px}
+  .page-btn{min-width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-weight:700;font-size:12px;padding:0 8px}
+  .page-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+  .page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .page-btn:disabled{opacity:.4;cursor:not-allowed}
+  .export-btn{background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .export-btn:hover:not(:disabled){background:var(--primary2)}
+  .export-btn:disabled{background:var(--surface2);color:var(--muted);border-color:var(--border);cursor:not-allowed}
+  .export-count{background:rgba(255,255,255,.22);padding:1px 8px;border-radius:99px;font-size:10px}
+  .export-btn:disabled .export-count{background:var(--surface);color:var(--muted)}
+</style>
+</head>
 <body data-page="transactions">
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><div class="logo">DV</div><div class="brand-text"><div class="brand-title">DejaVu Payments</div><div class="brand-sub">Fraud Intelligence</div></div></div>
-    
-<nav class="nav">
-  <a href="index.html" data-page="overview"><span class="nav-ico">&#8862;</span><span class="nav-label">Overview</span></a>
-  <a href="transactions.html" data-page="transactions"><span class="nav-ico">&#9776;</span><span class="nav-label">Transactions</span><span class="nav-count" data-count="txns">0</span></a>
-  <a href="alerts.html" data-page="alerts"><span class="nav-ico">&#9888;</span><span class="nav-label">Alerts</span><span class="nav-count" data-count="alerts">0</span></a>
-  <a href="insights.html" data-page="insights"><span class="nav-ico">&#9679;</span><span class="nav-label">Insights</span></a>
-  <a href="settings.html" data-page="settings"><span class="nav-ico">&#9881;</span><span class="nav-label">Settings</span></a>
-</nav>
-
+    <div class="brand">
+      <div class="logo">DV</div>
+      <div class="brand-text"><div class="brand-title">DejaVu Payments</div><div class="brand-sub">Fraud Intelligence</div></div>
+    </div>
+    <nav class="nav">
+      <a href="index.html" data-page="overview"><span class="nav-ico">*</span><span class="nav-label">Overview</span></a>
+      <a href="transactions.html" data-page="transactions"><span class="nav-ico">$</span><span class="nav-label">Transactions</span><span class="nav-count" data-count="txns">0</span></a>
+      <a href="alerts.html" data-page="alerts"><span class="nav-ico">!</span><span class="nav-label">Alerts</span><span class="nav-count" data-count="alerts">0</span></a>
+      <a href="insights.html" data-page="insights"><span class="nav-ico">%</span><span class="nav-label">Insights</span></a>
+      <a href="settings.html" data-page="settings"><span class="nav-ico">#</span><span class="nav-label">Settings</span></a>
+    </nav>
     <div class="engine-card"><b style="color:var(--primary)">AI Engine Status</b><br>XGBoost, LSTM, GNN<br><span style="color:var(--safe)">All models operational</span></div>
   </aside>
   <main class="main">
     <header class="topbar">
-      <div class="left-head"><button class="icon-btn" id="collapseBtn">&#9776;</button><div><div class="page-title" id="pageTitle"></div><div class="page-sub" id="pageSub"></div></div></div>
+      <div class="left-head">
+        <button class="icon-btn" id="collapseBtn">&#9776;</button>
+        <div><div class="page-title" id="pageTitle"></div><div class="page-sub" id="pageSub"></div></div>
+      </div>
       <div class="top-actions">
-        <div class="search"><span>&#128269;</span><input placeholder="Search..."></div>
+        <div class="search"><span>&#128269;</span><input placeholder="Search transactions, IDs..."></div>
         <button class="icon-btn" id="notifBtn">&#128276;<span class="badge" id="notifBadge">0</span></button>
         <button class="icon-btn" id="themeToggle">&#127769;</button>
         <div class="user"><div class="avatar">KC</div><span><b>Kartik</b><br><small class="small">Sr. Analyst</small></span></div>
-        <div class="notif-panel" id="notifPanel"><div class="notif-head"><b>Notifications</b><button class="btn" onclick="markAllRead()">Mark all read</button></div><div class="notif-list" id="notifList"></div><a class="small" style="text-align:center;padding:10px;text-decoration:none;color:var(--primary)" href="alerts.html">View all alerts</a></div>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-head"><b>Notifications</b><button class="btn" onclick="markAllRead()">Mark all read</button></div>
+          <div class="notif-list" id="notifList"></div>
+          <a class="small" style="text-align:center;padding:12px;text-decoration:none;color:var(--primary)" href="alerts.html">View all alerts</a>
+        </div>
       </div>
     </header>
     <section class="content">
-<div class="training-banner" id="trainingBanner"></div>
-<div class="grid">
-  <div class="card c12">
-    <div class="card-head">
-      <div><div class="card-title">AI-Scored Transactions</div><div class="card-sub">XGBoost + LSTM + GNN produce a binary Approved/Rejected decision. Analyst overrides feed the next training cycle. Case management filters live here (see "Rejected" and "Analyst Overridden").</div></div>
-      <div class="filters">
-        <span class="chip active" data-filter="all">All</span>
-        <span class="chip" data-filter="Approved">Approved</span>
-        <span class="chip" data-filter="Rejected">Rejected (Case Queue)</span>
-        <span class="chip" data-filter="high-risk">High Risk</span>
-        <span class="chip" data-filter="overridden">Analyst Overridden</span>
+      <div class="training-banner" id="trainingBanner"></div>
+      <div class="live-indicator" id="liveIndicator" data-new="0"></div>
+
+      <div class="grid row-6">
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                AI-Scored Transactions
+                <span class="live-badge"><span class="live-dot" id="liveDot"></span> LIVE - new every 5s</span>
+                <button class="pause-btn" id="pauseBtn" onclick="togglePause()">&#9209; Pause live stream</button>
+              </div>
+              <div class="card-sub">Every transaction receives a binary decision (Approved or Rejected) from XGBoost + LSTM + GNN. Analyst overrides feed the next training cycle.</div>
+            </div>
+            <div class="live-strip">
+              <button class="export-btn" id="exportBtn" onclick="exportOverridden()" disabled>
+                &#128190; Export Overridden <span class="export-count" id="exportCount">0</span>
+              </button>
+              <div class="filters">
+                <span class="chip active" data-filter="all">All</span>
+                <span class="chip" data-filter="Approved">Approved</span>
+                <span class="chip" data-filter="Rejected">Rejected</span>
+                <span class="chip" data-filter="high-risk">High Risk</span>
+                <span class="chip" data-filter="overridden">Analyst Overridden</span>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Timestamp</th><th>Channel</th><th>Amount</th>
+                  <th>Risk</th><th>AI Decision</th><th>Final Status</th>
+                  <th>Reason Codes</th><th>Analyst Action</th>
+                </tr>
+              </thead>
+              <tbody id="txnBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
       </div>
-    </div>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Time</th><th>Channel</th><th>Amount</th><th>Risk</th><th>AI Decision</th><th>Final Status</th><th>Reasons</th><th>Analyst Action</th></tr></thead><tbody id="txnBody"></tbody></table></div>
-  </div>
-</div>
-<div class="grid">
-  <div class="card c8"><div class="card-title">Selected Transaction</div><div class="card-sub">Click any row above</div><div id="txnDetail"></div></div>
-  <div class="card c4">
-    <div class="card-title">AI Explainability</div>
-    <div class="card-sub" id="explainId2"></div>
-    <div class="risk-big" id="explainScore2"></div>
-    <div id="aiDecisionLabel" class="small" style="margin:6px 0 12px"></div>
-    <div class="sig"><div class="sigline"><span>XGBoost</span><b id="sigXGB2"></b></div><div class="bar"><div id="fillXGB2" class="fill" style="background:var(--primary)"></div></div></div>
-    <div class="sig"><div class="sigline"><span>LSTM</span><b id="sigLSTM2"></b></div><div class="bar"><div id="fillLSTM2" class="fill" style="background:var(--warn)"></div></div></div>
-    <div class="sig"><div class="sigline"><span>GNN</span><b id="sigGNN2"></b></div><div class="bar"><div id="fillGNN2" class="fill" style="background:var(--danger)"></div></div></div>
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn safe" onclick="openReview('approve')">Mark Approved</button>
-      <button class="btn danger" onclick="openReview('reject')">Mark Rejected</button>
-      <button class="btn" onclick="openReview('agree')">Agree with AI</button>
-    </div>
-  </div>
-</div>
-</section>
+
+      <div class="grid row-6" style="margin-top:14px">
+        <div class="card span-4">
+          <div class="card-title">Selected Transaction</div>
+          <div class="card-sub">Click any row in the table</div>
+          <div id="txnDetail"></div>
+        </div>
+        <div class="card span-2">
+          <div class="card-title">AI Explainability</div>
+          <div class="card-sub" id="explainId2"></div>
+          <div class="risk-big" id="explainScore2"></div>
+          <div id="aiDecisionLabel" class="small" style="margin:6px 0 12px"></div>
+          <div class="sig"><div class="sigline"><span>XGBoost</span><b id="sigXGB2"></b></div><div class="bar"><div id="fillXGB2" class="fill" style="background:var(--primary)"></div></div></div>
+          <div class="sig"><div class="sigline"><span>LSTM</span><b id="sigLSTM2"></b></div><div class="bar"><div id="fillLSTM2" class="fill" style="background:var(--warn)"></div></div></div>
+          <div class="sig"><div class="sigline"><span>GNN</span><b id="sigGNN2"></b></div><div class="bar"><div id="fillGNN2" class="fill" style="background:var(--danger)"></div></div></div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn safe" onclick="openReview('approve')">Mark Approved</button>
+            <button class="btn danger" onclick="openReview('reject')">Mark Rejected</button>
+            <button class="btn" onclick="openReview('agree')">Agree with AI</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -80,14 +148,18 @@
       <option>Other (see notes)</option>
     </select>
     <label>Analyst Notes (optional)</label>
-    <textarea rows="3" placeholder="Add training context..."></textarea>
+    <textarea id="modalNotes" rows="3" placeholder="Add training context for the models..."></textarea>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal()">Cancel</button>
       <button class="btn primary" onclick="submitReview()">Submit as Training Data</button>
     </div>
   </div>
 </div>
-<div class="toast" id="toast"><b id="toastTitle">Saved</b><br><span class="small" id="toastMsg">Done</span></div>
+<div class="toast" id="toast">
+  <b id="toastTitle">Saved</b><br>
+  <span class="small" id="toastMsg">Done</span>
+</div>
 
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>
