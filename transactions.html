@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DejaVu Payments</title><link rel="stylesheet" href="styles.css"></head>
+<body data-page="transactions">
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">DV</div><div class="brand-text"><div class="brand-title">DejaVu Payments</div><div class="brand-sub">Fraud Intelligence</div></div></div>
+    
+<nav class="nav">
+  <a href="index.html" data-page="overview"><span class="nav-ico">&#8862;</span><span class="nav-label">Overview</span></a>
+  <a href="transactions.html" data-page="transactions"><span class="nav-ico">&#9776;</span><span class="nav-label">Transactions</span><span class="nav-count" data-count="txns">0</span></a>
+  <a href="alerts.html" data-page="alerts"><span class="nav-ico">&#9888;</span><span class="nav-label">Alerts</span><span class="nav-count" data-count="alerts">0</span></a>
+  <a href="insights.html" data-page="insights"><span class="nav-ico">&#9679;</span><span class="nav-label">Insights</span></a>
+  <a href="settings.html" data-page="settings"><span class="nav-ico">&#9881;</span><span class="nav-label">Settings</span></a>
+</nav>
+
+    <div class="engine-card"><b style="color:var(--primary)">AI Engine Status</b><br>XGBoost, LSTM, GNN<br><span style="color:var(--safe)">All models operational</span></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="left-head"><button class="icon-btn" id="collapseBtn">&#9776;</button><div><div class="page-title" id="pageTitle"></div><div class="page-sub" id="pageSub"></div></div></div>
+      <div class="top-actions">
+        <div class="search"><span>&#128269;</span><input placeholder="Search..."></div>
+        <button class="icon-btn" id="notifBtn">&#128276;<span class="badge" id="notifBadge">0</span></button>
+        <button class="icon-btn" id="themeToggle">&#127769;</button>
+        <div class="user"><div class="avatar">KC</div><span><b>Kartik</b><br><small class="small">Sr. Analyst</small></span></div>
+        <div class="notif-panel" id="notifPanel"><div class="notif-head"><b>Notifications</b><button class="btn" onclick="markAllRead()">Mark all read</button></div><div class="notif-list" id="notifList"></div><a class="small" style="text-align:center;padding:10px;text-decoration:none;color:var(--primary)" href="alerts.html">View all alerts</a></div>
+      </div>
+    </header>
+    <section class="content">
+<div class="training-banner" id="trainingBanner"></div>
+<div class="grid">
+  <div class="card c12">
+    <div class="card-head">
+      <div><div class="card-title">AI-Scored Transactions</div><div class="card-sub">XGBoost + LSTM + GNN produce a binary Approved/Rejected decision. Analyst overrides feed the next training cycle. Case management filters live here (see "Rejected" and "Analyst Overridden").</div></div>
+      <div class="filters">
+        <span class="chip active" data-filter="all">All</span>
+        <span class="chip" data-filter="Approved">Approved</span>
+        <span class="chip" data-filter="Rejected">Rejected (Case Queue)</span>
+        <span class="chip" data-filter="high-risk">High Risk</span>
+        <span class="chip" data-filter="overridden">Analyst Overridden</span>
+      </div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Time</th><th>Channel</th><th>Amount</th><th>Risk</th><th>AI Decision</th><th>Final Status</th><th>Reasons</th><th>Analyst Action</th></tr></thead><tbody id="txnBody"></tbody></table></div>
+  </div>
+</div>
+<div class="grid">
+  <div class="card c8"><div class="card-title">Selected Transaction</div><div class="card-sub">Click any row above</div><div id="txnDetail"></div></div>
+  <div class="card c4">
+    <div class="card-title">AI Explainability</div>
+    <div class="card-sub" id="explainId2"></div>
+    <div class="risk-big" id="explainScore2"></div>
+    <div id="aiDecisionLabel" class="small" style="margin:6px 0 12px"></div>
+    <div class="sig"><div class="sigline"><span>XGBoost</span><b id="sigXGB2"></b></div><div class="bar"><div id="fillXGB2" class="fill" style="background:var(--primary)"></div></div></div>
+    <div class="sig"><div class="sigline"><span>LSTM</span><b id="sigLSTM2"></b></div><div class="bar"><div id="fillLSTM2" class="fill" style="background:var(--warn)"></div></div></div>
+    <div class="sig"><div class="sigline"><span>GNN</span><b id="sigGNN2"></b></div><div class="bar"><div id="fillGNN2" class="fill" style="background:var(--danger)"></div></div></div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn safe" onclick="openReview('approve')">Mark Approved</button>
+      <button class="btn danger" onclick="openReview('reject')">Mark Rejected</button>
+      <button class="btn" onclick="openReview('agree')">Agree with AI</button>
+    </div>
+  </div>
+</div>
+</section>
+  </main>
+</div>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <h3 id="modalTitle">Manual Review</h3>
+    <p class="small" id="modalDesc"></p>
+    <label>Reason <span style="color:var(--danger)">*</span></label>
+    <select id="modalReason">
+      <option value="">Select reason...</option>
+      <option>Customer verified transaction</option>
+      <option>Known merchant / recurring pattern</option>
+      <option>Velocity anomaly confirmed</option>
+      <option>Mule network destination confirmed</option>
+      <option>Behavioral drift matches ATO</option>
+      <option>False positive - low-risk context</option>
+      <option>Other (see notes)</option>
+    </select>
+    <label>Analyst Notes (optional)</label>
+    <textarea rows="3" placeholder="Add training context..."></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="submitReview()">Submit as Training Data</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"><b id="toastTitle">Saved</b><br><span class="small" id="toastMsg">Done</span></div>
+
+<script src="app.js"></script>
+</body></html>

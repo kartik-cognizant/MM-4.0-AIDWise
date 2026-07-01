@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DejaVu Payments</title><link rel="stylesheet" href="styles.css"></head>
+<body data-page="alerts">
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">DV</div><div class="brand-text"><div class="brand-title">DejaVu Payments</div><div class="brand-sub">Fraud Intelligence</div></div></div>
+    
+<nav class="nav">
+  <a href="index.html" data-page="overview"><span class="nav-ico">&#8862;</span><span class="nav-label">Overview</span></a>
+  <a href="transactions.html" data-page="transactions"><span class="nav-ico">&#9776;</span><span class="nav-label">Transactions</span><span class="nav-count" data-count="txns">0</span></a>
+  <a href="alerts.html" data-page="alerts"><span class="nav-ico">&#9888;</span><span class="nav-label">Alerts</span><span class="nav-count" data-count="alerts">0</span></a>
+  <a href="insights.html" data-page="insights"><span class="nav-ico">&#9679;</span><span class="nav-label">Insights</span></a>
+  <a href="settings.html" data-page="settings"><span class="nav-ico">&#9881;</span><span class="nav-label">Settings</span></a>
+</nav>
+
+    <div class="engine-card"><b style="color:var(--primary)">AI Engine Status</b><br>XGBoost, LSTM, GNN<br><span style="color:var(--safe)">All models operational</span></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="left-head"><button class="icon-btn" id="collapseBtn">&#9776;</button><div><div class="page-title" id="pageTitle"></div><div class="page-sub" id="pageSub"></div></div></div>
+      <div class="top-actions">
+        <div class="search"><span>&#128269;</span><input placeholder="Search..."></div>
+        <button class="icon-btn" id="notifBtn">&#128276;<span class="badge" id="notifBadge">0</span></button>
+        <button class="icon-btn" id="themeToggle">&#127769;</button>
+        <div class="user"><div class="avatar">KC</div><span><b>Kartik</b><br><small class="small">Sr. Analyst</small></span></div>
+        <div class="notif-panel" id="notifPanel"><div class="notif-head"><b>Notifications</b><button class="btn" onclick="markAllRead()">Mark all read</button></div><div class="notif-list" id="notifList"></div><a class="small" style="text-align:center;padding:10px;text-decoration:none;color:var(--primary)" href="alerts.html">View all alerts</a></div>
+      </div>
+    </header>
+    <section class="content">
+<div class="grid"><div class="card c12">
+  <div class="card-head"><div><div class="card-title">All Alerts</div><div class="card-sub">System alerts from AI engines and thresholds.</div></div><button class="btn primary" onclick="markAllRead();renderAlerts()">Mark all read</button></div>
+  <div id="alertsList"></div>
+</div></div>
+</section>
+  </main>
+</div>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <h3 id="modalTitle">Manual Review</h3>
+    <p class="small" id="modalDesc"></p>
+    <label>Reason <span style="color:var(--danger)">*</span></label>
+    <select id="modalReason">
+      <option value="">Select reason...</option>
+      <option>Customer verified transaction</option>
+      <option>Known merchant / recurring pattern</option>
+      <option>Velocity anomaly confirmed</option>
+      <option>Mule network destination confirmed</option>
+      <option>Behavioral drift matches ATO</option>
+      <option>False positive - low-risk context</option>
+      <option>Other (see notes)</option>
+    </select>
+    <label>Analyst Notes (optional)</label>
+    <textarea rows="3" placeholder="Add training context..."></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="submitReview()">Submit as Training Data</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"><b id="toastTitle">Saved</b><br><span class="small" id="toastMsg">Done</span></div>
+
+<script src="app.js"></script>
+</body></html>
