@@ -6,27 +6,40 @@
 <title>DejaVu Payments - Transactions</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .live-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .live-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--safe);font-size:11px;font-weight:800}
-  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--safe);box-shadow:0 0 0 rgba(34,197,94,.6);animation:pulse 1.6s infinite}
+  /* --- Transactions page local overrides + additions --- */
+  .txn-card{width:100%;box-sizing:border-box;margin-bottom:14px}
+  .txn-head{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:16px;flex-wrap:wrap;margin-bottom:14px
+  }
+  .txn-head .head-left{min-width:0;flex:1 1 260px}
+  .txn-head .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .live-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--safe);font-size:11px;font-weight:800;white-space:nowrap}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--safe);box-shadow:0 0 0 rgba(34,197,94,.6);animation:pulse 1.6s infinite;flex-shrink:0}
   .live-dot.off{background:var(--muted);animation:none;box-shadow:none}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-  .pause-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text)}
+  .pause-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap}
   .pause-btn.paused{background:rgba(245,158,11,.14);color:var(--warn);border-color:var(--warn)}
   .live-indicator{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:rgba(46,48,142,.08);color:var(--primary);font-size:12px;margin-bottom:12px;font-weight:700}
   .live-indicator a{color:var(--primary);text-decoration:underline;cursor:pointer}
+  .filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .filter-row .filters{flex:1 1 auto}
   .pagination{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 4px 4px;flex-wrap:wrap}
   .page-info{font-size:12px;color:var(--muted)}
-  .page-ctrls{display:flex;gap:4px}
+  .page-ctrls{display:flex;gap:4px;flex-wrap:wrap}
   .page-btn{min-width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-weight:700;font-size:12px;padding:0 8px}
   .page-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
   .page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
   .page-btn:disabled{opacity:.4;cursor:not-allowed}
-  .export-btn{background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .export-btn{background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
   .export-btn:hover:not(:disabled){background:var(--primary2)}
   .export-btn:disabled{background:var(--surface2);color:var(--muted);border-color:var(--border);cursor:not-allowed}
   .export-count{background:rgba(255,255,255,.22);padding:1px 8px;border-radius:99px;font-size:10px}
   .export-btn:disabled .export-count{background:var(--surface);color:var(--muted)}
+  /* Below-table detail grid (two cards side by side) - safe explicit widths */
+  .detail-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;align-items:stretch}
+  .detail-row > .card{width:100%;box-sizing:border-box;min-width:0}
+  @media(max-width:1100px){.detail-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-page="transactions">
@@ -67,53 +80,55 @@
       <div class="training-banner" id="trainingBanner"></div>
       <div class="live-indicator" id="liveIndicator" data-new="0"></div>
 
-      <div class="grid row-6">
-        <div class="card span-6">
-          <div class="card-head">
-            <div>
-              <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                AI-Scored Transactions
-                <span class="live-badge"><span class="live-dot" id="liveDot"></span> LIVE - new every 5s</span>
-                <button class="pause-btn" id="pauseBtn" onclick="togglePause()">&#9209; Pause live stream</button>
-              </div>
-              <div class="card-sub">Every transaction receives a binary decision (Approved or Rejected) from XGBoost + LSTM + GNN. Analyst overrides feed the next training cycle.</div>
-            </div>
-            <div class="live-strip">
-              <button class="export-btn" id="exportBtn" onclick="exportOverridden()" disabled>
-                &#128190; Export Overridden <span class="export-count" id="exportCount">0</span>
-              </button>
-              <div class="filters">
-                <span class="chip active" data-filter="all">All</span>
-                <span class="chip" data-filter="Approved">Approved</span>
-                <span class="chip" data-filter="Rejected">Rejected</span>
-                <span class="chip" data-filter="high-risk">High Risk</span>
-                <span class="chip" data-filter="overridden">Analyst Overridden</span>
-              </div>
-            </div>
+      <!-- Main transactions card - plain full-width block, no grid abstraction -->
+      <div class="card txn-card">
+        <div class="txn-head">
+          <div class="head-left">
+            <div class="card-title" style="margin-bottom:4px">AI-Scored Transactions</div>
+            <div class="card-sub" style="margin-bottom:0">Every transaction receives a binary decision (Approved or Rejected) from XGBoost + LSTM + GNN. Analyst overrides feed the next training cycle.</div>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th><th>Timestamp</th><th>Channel</th><th>Amount</th>
-                  <th>Risk</th><th>AI Decision</th><th>Final Status</th>
-                  <th>Reason Codes</th><th>Analyst Action</th>
-                </tr>
-              </thead>
-              <tbody id="txnBody"></tbody>
-            </table>
+          <div class="head-right">
+            <span class="live-badge"><span class="live-dot" id="liveDot"></span> LIVE - new every 5s</span>
+            <button class="pause-btn" id="pauseBtn" onclick="togglePause()">&#9209; Pause</button>
+            <button class="export-btn" id="exportBtn" onclick="exportOverridden()" disabled>
+              &#128190; Export Overridden <span class="export-count" id="exportCount">0</span>
+            </button>
           </div>
-          <div class="pagination" id="pagination"></div>
         </div>
+
+        <div class="filter-row">
+          <div class="filters">
+            <span class="chip active" data-filter="all">All</span>
+            <span class="chip" data-filter="Approved">Approved</span>
+            <span class="chip" data-filter="Rejected">Rejected</span>
+            <span class="chip" data-filter="high-risk">High Risk</span>
+            <span class="chip" data-filter="overridden">Analyst Overridden</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Timestamp</th><th>Channel</th><th>Amount</th>
+                <th>Risk</th><th>AI Decision</th><th>Final Status</th>
+                <th>Reason Codes</th><th>Analyst Action</th>
+              </tr>
+            </thead>
+            <tbody id="txnBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
       </div>
 
-      <div class="grid row-6" style="margin-top:14px">
-        <div class="card span-4">
+      <!-- Detail + Explainability row -->
+      <div class="detail-row">
+        <div class="card">
           <div class="card-title">Selected Transaction</div>
           <div class="card-sub">Click any row in the table</div>
           <div id="txnDetail"></div>
         </div>
-        <div class="card span-2">
+        <div class="card">
           <div class="card-title">AI Explainability</div>
           <div class="card-sub" id="explainId2"></div>
           <div class="risk-big" id="explainScore2"></div>
